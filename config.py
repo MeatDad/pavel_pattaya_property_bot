@@ -1,3 +1,8 @@
-BOT_TOKEN = "8545723807:AAEd_8PQt4Y82-GM18xjGzEhN0PT_-W9eHo"
+import os
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN environment variable is not set!")
 
 BASE_URL = "https://enlightproperty.com"

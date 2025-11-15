@@ -1,3 +1,5 @@
+print("Bot started successfully on Railway!")
+
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
