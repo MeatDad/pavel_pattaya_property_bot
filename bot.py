@@ -4,7 +4,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 import config  # правильный импорт
-from handlers import start, menu, listings
+from handlers import start, menu, listings, filters_handlers
 
 async def main():
     bot = Bot(
@@ -16,6 +16,7 @@ async def main():
     dp.include_router(start.router)
     dp.include_router(menu.router)
     dp.include_router(listings.router)
+    dp.include_router(filters_handlers.router)
 
     print("Бот запущен...")
     await dp.start_polling(bot)
