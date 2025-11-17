@@ -1,4 +1,5 @@
 print("Bot started successfully on Railway!")
+print(">>> ACTIVE CODE VERSION: filters v2 loaded <<<")
 
 import asyncio
 from aiogram import Bot, Dispatcher
