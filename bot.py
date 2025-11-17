@@ -15,8 +15,8 @@ async def main():
 
     dp.include_router(start.router)
     dp.include_router(menu.router)
+    dp.include_router(filters_handlers.router)  # <- обязательно ДО listings
     dp.include_router(listings.router)
-    dp.include_router(filters_handlers.router)
 
     print("Бот запущен...")
     await dp.start_polling(bot)

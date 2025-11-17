@@ -5,12 +5,17 @@ from keyboards.filters_kb import (
 )
 from services.parser import parse_properties
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 router = Router()
 
 
 # --- 1. Вход в фильтры ("Купить" / "Арендовать") ---
 @router.message(F.text.in_(["🏠 Купить", "🏖 Арендовать"]))
 async def enter_filters(message: types.Message, state: FSMContext):
+    logger.info("enter_filters triggered for user %s text=%s", message.from_user.id, message.text)
     text = message.text
     mode = "buy" if "Купить" in text else "rent"
 
