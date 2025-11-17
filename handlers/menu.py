@@ -1,9 +1,9 @@
-from aiogram import Router, types
+from aiogram import Router, types, F
 from services.parser import parse_properties
 
 router = Router()
 
-@router.message()
+@router.message(F.text.in_(["📰 Новости", "📞 Контакты", "🏢 Компания", "🏗 Проекты", "📅 Бронирование"]))
 async def menu_navigation(message: types.Message):
     section = message.text
     valid_sections = [
