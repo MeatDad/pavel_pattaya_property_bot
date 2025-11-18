@@ -3,36 +3,32 @@ from services.parser import parse_properties
 
 router = Router()
 
-@router.message(F.text.in_(["📰 Новости", "📞 Контакты", "🏢 Компания", "🏗 Проекты", "📅 Бронирование"]))
+# Меню должно обрабатывать ТОЛЬКО свои разделы
+MENU_SECTIONS = [
+    "📰 Новости",
+    "📞 Контакты",
+    "🏢 Компания"
+]
+
+@router.message(F.text.in_(MENU_SECTIONS))
 async def menu_navigation(message: types.Message):
     section = message.text
-    valid_sections = [
-        "🏠 Купить",
-        "🏖 Арендовать",
-        "🌆 Проекты",
-        "🏢 Продать недвижимость",
-        "📅 Бронирование"
-    ]
 
-    if section not in valid_sections:
-        await message.answer("Пожалуйста, выберите раздел из меню ниже.")
-        return
-
-    await message.answer(f"Вы выбрали: {section}\n🔄 Загружаю объекты...")
+    await message.answer(f"Вы выбрали: {section}\n🔄 Загружаю информацию...")
 
     listings = parse_properties(section)
     if not listings:
-        await message.answer("Не удалось найти объекты 😕")
+        await message.answer("Не удалось загрузить данные 😕")
         return
 
     for item in listings:
         caption = (
             f"<b>{item['title']}</b>\n"
-            f"💰 {item['price']}\n"
+            f"{item.get('description','')}\n"
             f"<a href='{item['link']}'>Подробнее</a>"
         )
 
-        if item["img"]:
+        if item.get("img"):
             await message.answer_photo(item["img"], caption=caption)
         else:
             await message.answer(caption)

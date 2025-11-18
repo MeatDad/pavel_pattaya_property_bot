@@ -7,12 +7,13 @@ logger = logging.getLogger(__name__)
 
 router = Router()
 
-# Показываем объекты только для этих разделов
+# Разделы со списками объектов без фильтров
 SECTIONS = ["🌆 Проекты", "🏢 Продать недвижимость", "📅 Бронирование"]
 
 @router.message(lambda msg: msg.text in SECTIONS)
 async def show_listings(message: types.Message):
     logger.info("listings.show_listings triggered for user %s text=%s", message.from_user.id, message.text)
+
     listings = parse_properties(message.text)
     if not listings:
         await message.answer("Не удалось загрузить объекты. Попробуйте позже.")
@@ -24,7 +25,7 @@ async def show_listings(message: types.Message):
             f"💰 {item['price']}\n"
             f"<a href='{item['link']}'>Подробнее</a>"
         )
-        if item['img']:
+        if item.get('img'):
             await message.answer_photo(item['img'], caption=caption)
         else:
             await message.answer(caption)
