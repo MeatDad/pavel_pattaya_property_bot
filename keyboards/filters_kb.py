@@ -1,13 +1,12 @@
 # keyboards/filters_kb.py
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-# Areas (районы)
 AREAS = [
-    "Central Pattaya","South Pattaya","North Pattaya","Pratumnak",
-    "Jomtien","Wongamat","Naklua","East Pattaya"
+    "Central Pattaya", "South Pattaya", "North Pattaya", "Pratumnak",
+    "Jomtien", "Wongamat", "Naklua", "East Pattaya"
 ]
 
-PROPERTY_TYPES = ["Condo","House","Villa","Townhome","Land"]
+PROPERTY_TYPES = ["Condo", "House", "Villa", "Townhome", "Land"]
 
 BUY_PRICE_BUTTONS = [
     ("0–2M", "0-2000000"),
@@ -35,69 +34,117 @@ POPULAR_FEATURES = [
     ("Brand New", "brand_new")
 ]
 
-# Helpers to build keyboards
+
+# ----- Aiogram 3 совместимые клавиатуры -----
+
 def main_filters_kb(mode: str, selected: dict) -> InlineKeyboardMarkup:
-    """
-    mode: "buy" or "rent"
-    selected: dict of current selections to show in labels (optional)
-    """
-    kb = InlineKeyboardMarkup(row_width=2)
-    kb.add(
-        InlineKeyboardButton(text="💰 Цена", callback_data=f"{mode}:price"),
-        InlineKeyboardButton(text="🛏 Спальни", callback_data=f"{mode}:bedrooms"),
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="💰 Цена", callback_data=f"{mode}:price"),
+                InlineKeyboardButton(text="🛏 Спальни", callback_data=f"{mode}:bedrooms")
+            ],
+            [
+                InlineKeyboardButton(text="🏘 Тип", callback_data=f"{mode}:type"),
+                InlineKeyboardButton(text="📍 Район", callback_data=f"{mode}:area")
+            ],
+            [
+                InlineKeyboardButton(text="⚙️ More", callback_data=f"{mode}:more"),
+                InlineKeyboardButton(text="♻️ Сбросить", callback_data=f"{mode}:reset")
+            ],
+            [
+                InlineKeyboardButton(text="🔎 Показать результаты", callback_data=f"{mode}:show")
+            ]
+        ]
     )
-    kb.add(
-        InlineKeyboardButton(text="🏘 Тип", callback_data=f"{mode}:type"),
-        InlineKeyboardButton(text="📍 Район", callback_data=f"{mode}:area"),
-    )
-    kb.add(
-        InlineKeyboardButton(text="⚙️ More", callback_data=f"{mode}:more"),
-        InlineKeyboardButton(text="♻️ Сбросить", callback_data=f"{mode}:reset"),
-    )
-    # Show results button (active always, server will check)
-    kb.add(InlineKeyboardButton(text="🔎 Показать результаты", callback_data=f"{mode}:show"))
-    return kb
+
 
 def price_kb(mode: str) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardMarkup(row_width=2)
+    rows = []
     buttons = BUY_PRICE_BUTTONS if mode == "buy" else RENT_PRICE_BUTTONS
+
     for label, val in buttons:
-        kb.insert(InlineKeyboardButton(text=label, callback_data=f"{mode}:price:{val}"))
-    kb.add(InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back"))
-    return kb
+        rows.append([
+            InlineKeyboardButton(text=label, callback_data=f"{mode}:price:{val}")
+        ])
+
+    rows.append([
+        InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 
 def bedrooms_kb(mode: str) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardMarkup(row_width=2)
+    rows = []
+
     for label, val in BEDROOMS:
-        kb.insert(InlineKeyboardButton(text=label, callback_data=f"{mode}:bed:{val}"))
-    kb.add(InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back"))
-    return kb
+        rows.append([
+            InlineKeyboardButton(text=label, callback_data=f"{mode}:bed:{val}")
+        ])
+
+    rows.append([
+        InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 
 def type_kb(mode: str) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardMarkup(row_width=2)
+    rows = []
+
     for t in PROPERTY_TYPES:
-        kb.insert(InlineKeyboardButton(text=t, callback_data=f"{mode}:type:{t}"))
-    kb.add(InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back"))
-    return kb
+        rows.append([
+            InlineKeyboardButton(text=t, callback_data=f"{mode}:type:{t}")
+        ])
+
+    rows.append([
+        InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 
 def area_kb(mode: str) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardMarkup(row_width=1)
+    rows = []
+
     for a in AREAS:
-        kb.insert(InlineKeyboardButton(text=a, callback_data=f"{mode}:area:{a}"))
-    kb.add(InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back"))
-    return kb
+        rows.append([
+            InlineKeyboardButton(text=a, callback_data=f"{mode}:area:{a}")
+        ])
+
+    rows.append([
+        InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 
 def more_kb(mode: str) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardMarkup(row_width=2)
+    rows = []
+
     for label, key in POPULAR_FEATURES:
-        kb.insert(InlineKeyboardButton(text=label, callback_data=f"{mode}:feat:{key}"))
-    kb.add(InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back"))
-    kb.add(InlineKeyboardButton(text="🔎 Показать результаты", callback_data=f"{mode}:show"))
-    return kb
+        rows.append([
+            InlineKeyboardButton(text=label, callback_data=f"{mode}:feat:{key}")
+        ])
+
+    rows.append([
+        InlineKeyboardButton(text="↩️ Назад", callback_data=f"{mode}:back")
+    ])
+
+    rows.append([
+        InlineKeyboardButton(text="🔎 Показать результаты", callback_data=f"{mode}:show")
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
 
 def summary_kb(mode: str) -> InlineKeyboardMarkup:
-    # small nav keyboard shown with the summary
-    kb = InlineKeyboardMarkup(row_width=2)
-    kb.add(InlineKeyboardButton(text="Изменить фильтры", callback_data=f"{mode}:open"),
-           InlineKeyboardButton(text="🔎 Показать результаты", callback_data=f"{mode}:show"))
-    return kb
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="Изменить фильтры", callback_data=f"{mode}:open"),
+                InlineKeyboardButton(text="🔎 Показать результаты", callback_data=f"{mode}:show")
+            ]
+        ]
+    )
