@@ -15,8 +15,8 @@ async def main():
     dp = Dispatcher()
 
     dp.include_router(start.router)
-    dp.include_router(filters_handlers.router)  # ← фильтры раньше меню
     dp.include_router(menu.router)
+    dp.include_router(filters_handlers.router)  # <- ДО listings
     dp.include_router(listings.router)
 
     print("Бот запущен...")
