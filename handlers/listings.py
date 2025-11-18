@@ -10,7 +10,7 @@ router = Router()
 # Разделы со списками объектов без фильтров
 SECTIONS = ["🌆 Проекты", "🏢 Продать недвижимость", "📅 Бронирование"]
 
-@router.message(lambda msg: msg.text in SECTIONS)
+@router.message(F.text.in_(SECTIONS))
 async def show_listings(message: types.Message):
     logger.info("listings.show_listings triggered for user %s text=%s", message.from_user.id, message.text)
 

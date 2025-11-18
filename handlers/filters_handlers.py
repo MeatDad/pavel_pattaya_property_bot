@@ -8,6 +8,7 @@ from services.parser import parse_properties
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.warning(">>> FILTERS HANDLER LOADED AND ACTIVE <<<")
 
 router = Router()
 
