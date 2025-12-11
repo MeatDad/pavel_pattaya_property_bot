@@ -34,64 +34,53 @@ PROPERTY_TYPE_MAP = {
 }
 
 def _build_search_url(section: str, filters: dict) -> str:
-    """
-    Build a search URL compatible with the site's query parameters.
-    Important: the site expects a 'text' (location) value for correct filtering,
-    so we default to Thai 'พัทยา' (Pattaya) when location is not provided.
-    """
+
     mode = filters.get("mode", "buy")
     endpoint = "/public/units/sale" if mode == "buy" else "/public/units/rent"
 
-    # base params that site usually includes
     params = {
         "country": "",
         "price": "",
     }
 
-    # --- LOCATION / TEXT ---
-    # Use provided location, otherwise default to Pattaya in Thai (works best)
+    # location keywords
+    # text is only keyword search, NOT a location filter
     location = filters.get("location")
     if location:
         params["text"] = location
+        params["city"] = location
+        params["province"] = "ชลบุรี"  # Chonburi province
     else:
-        # default to Pattaya (Thai) so site applies filters correctly
-        params["text"] = "พัทยา"
+        params["text"] = "พัทยา"       # Pattaya keyword
+        params["city"] = "พัทยา"       # REQUIRED for price filtering
+        params["province"] = "ชลบุรี"  # REQUIRED for price filtering
 
-    # --- PRICE ---
+    # price
     if filters.get("min_price") is not None:
         params["min_price"] = str(filters["min_price"])
     if filters.get("max_price") is not None:
         params["max_price"] = str(filters["max_price"])
 
-    # --- BEDROOMS ---
+    # bedrooms
     if filters.get("bedrooms"):
         params["bed"] = str(filters["bedrooms"])
 
-    # --- BATHROOMS ---
+    # bathrooms
     if filters.get("bathrooms"):
         params["bathroom"] = str(filters["bathrooms"])
 
-    # --- PROPERTY TYPE ---
+    # property type
     ptype = filters.get("property_type")
     if ptype:
         code = PROPERTY_TYPE_MAP.get(ptype)
         if code:
-            params["type2[]"] = code
+            params["type[]"] = code  # <--- правильное имя
 
-    # --- FEATURES (fallback: append to text) ---
-    features = filters.get("features")
-    if features:
-        # append features to text so site may filter by phrase
-        params["text"] = (params.get("text", "") + " " + " ".join(features)).strip()
-
-    # Build final query string
+    # build final URL
     query = urlencode(params, doseq=True)
     url = f"{BASE}{endpoint}?{query}"
 
-    # Log for debugging (you already added logging)
     logger.warning("FINAL BUILT URL: %s", url)
-    logger.warning("FILTERS: %s", filters)
-
     return url
 
 
