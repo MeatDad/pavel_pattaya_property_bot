@@ -18,92 +18,63 @@ PRICE_MAP_BUY = {
 }
 # helper: if filter gives "0-2000000", we put min_price=0, max_price=2000000
 
-def _build_search_url(section: str, filters: Dict) -> str:
-    """
-    section: either '🏠 Купить' or '🏖 Арендовать' (or other short names)
-    filters: dict from FSM state, example:
-      {
-        "mode": "buy",
-        "min_price": 0,
-        "max_price": 2000000,
-        "bedrooms": "1",
-        "property_type": "Condo",
-        "location": "Central Pattaya",
-        "features": ["pool", "sea_view"]
-      }
-    Returns full URL to request (first page).
-    """
-    mode = filters.get("mode", "buy") if filters else ("buy" if "Купить" in section else "rent")
-    # site endpoints guess: use 'sale' for buy, 'rent' for rent (observed earlier)
+# встроим в services/parser.py
+
+# карта типов недвижимости: текст -> код
+PROPERTY_TYPE_MAP = {
+    "Condo": "1",
+    "House": "2",
+    "Villa": "3",
+    "Townhome": "4",
+    "Land": "5"
+}
+
+def _build_search_url(section: str, filters: dict) -> str:
+    mode = filters.get("mode", "buy")
     if mode == "buy":
         endpoint = "/public/units/sale"
     else:
         endpoint = "/public/units/rent"
 
-    params = {
-        # keep empty defaults expected by site
-        "country": "",
-        "text": "",  # optional free text
-        "price": "",
-    }
+    params = {}
 
-    # map prices (site seems to use min_price & max_price numeric)
-    if filters:
-        min_p = filters.get("min_price")
-        max_p = filters.get("max_price")
-        if min_p is not None:
-            params["min_price"] = str(min_p)
-        if max_p is not None:
-            params["max_price"] = str(max_p)
+    # строка поиска (город / район)
+    text = filters.get("location")
+    if text:
+        params["text"] = text
 
-        # bedrooms -> parameter 'bed'
-        bedrooms = filters.get("bedrooms")
-        if bedrooms:
-            # if bedrooms was "Studio"/"0" etc — site probably expects bed=1 etc
-            try:
-                # if numeric string -> use directly
-                bed_val = int(bedrooms)
-                params["bed"] = str(bed_val)
-            except Exception:
-                # map Studio->0, "1"->1 etc
-                if bedrooms.lower().startswith("studio"):
-                    params["bed"] = "0"
-                else:
-                    # fallback: try to extract digit
-                    import re
-                    m = re.search(r"\d+", str(bedrooms))
-                    if m:
-                        params["bed"] = m.group(0)
+    # минимальная и максимальная цена
+    if filters.get("min_price") is not None:
+        params["min_price"] = str(filters["min_price"])
+    if filters.get("max_price") is not None:
+        params["max_price"] = str(filters["max_price"])
 
-        # property type mapping: site used `type2[]` in example; we will try both name and numeric code
-        ptype = filters.get("property_type")
-        if ptype:
-            # Some sites use numeric codes; try using text param 'type' or 'type2[]'
-            # We'll set 'type2[]' to property type name (site may accept human-readable too)
-            params["type2[]"] = ptype
+    # спальни
+    if filters.get("bedrooms"):
+        params["bed"] = str(filters["bedrooms"])
 
-        # location -> free-text 'text' parameter is used in sample url
-        location = filters.get("location")
-        if location:
-            params["text"] = str(location)
+    # ванны
+    if filters.get("bathrooms"):
+        params["bathroom"] = str(filters["bathrooms"])
 
-        # features -> could be encoded differently per site; we'll set 'feature' param as comma list
-        features = filters.get("features", [])
-        if features:
-            params["feature"] = ",".join(features)
+    # тип недвижимости (используем числовой код)
+    ptype = filters.get("property_type")
+    if ptype:
+        code = PROPERTY_TYPE_MAP.get(ptype)
+        if code:
+            params["type2[]"] = code
 
-    # urlencode but preserve [] in keys
-    # build manually to preserve repeated parameters if needed
-    q_parts = []
-    for k, v in params.items():
-        if v is None or v == "":
-            # keep param with empty value maybe necessary for site; we will include empty string
-            q_parts.append(f"{quote_plus(k)}=")
-        else:
-            q_parts.append(f"{quote_plus(k)}={quote_plus(str(v))}")
-    query = "&".join(q_parts)
-    url = f"{BASE}{endpoint}?{query}"
-    return url
+    # дополнительные фильтры через текст (fallback)
+    features = filters.get("features")
+    if features:
+        params["text"] = params.get("text", "") + " " + " ".join(features)
+
+    # принудительно добавляем пустые, если почему-то нужны
+    params.setdefault("country", "")
+
+    query = urlencode(params, doseq=True)
+    return f"{BASE}{endpoint}?{query}"
+
 
 def _parse_listing_block(block) -> Optional[Dict]:
     try:
