@@ -5,6 +5,8 @@ from keyboards.filters_kb import (
 )
 from services.parser import parse_properties
 
+import json
+
 import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -94,14 +96,23 @@ async def handle_callbacks(query: types.CallbackQuery, state: FSMContext):
 
     # --- Установка значений ---
     if action == "price" and len(parts) == 3:
-        rng = parts[2]  # "0-2000000"
+        rng = parts[2]  # "0-2000000" или "10000000-"
         min_s, max_s = rng.split("-")
-        min_v = int(min_s) if min_s else None
-        max_v = int(max_s) if max_s else None
+        try:
+            min_v = int(min_s) if min_s and min_s.isdigit() else int(min_s) if min_s else None
+        except Exception:
+            min_v = None
+        try:
+            max_v = int(max_s) if max_s and max_s.isdigit() else None
+        except Exception:
+            max_v = None
 
+        # Если кнопки приходят с тысячным разделителем (unlikely), можно также replace()
+        # обновляем state
         await state.update_data(min_price=min_v, max_price=max_v)
         user = await state.get_data()
 
+        logger.info("PRICE set -> min=%s max=%s, state=%s", min_v, max_v, json.dumps(user, ensure_ascii=False))
         await query.message.edit_text(
             f"Цена установлена: {rng}\n\nТекущие фильтры: {user}",
             reply_markup=summary_kb(mode)

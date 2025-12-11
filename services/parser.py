@@ -5,6 +5,10 @@ from urllib.parse import urlencode, quote_plus
 import time
 from typing import Dict, List, Optional
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 BASE = "https://enlightproperty.com"
 
 HEADERS = {
@@ -28,52 +32,57 @@ PROPERTY_TYPE_MAP = {
     "Townhome": "4",
     "Land": "5"
 }
-
 def _build_search_url(section: str, filters: dict) -> str:
     mode = filters.get("mode", "buy")
-    if mode == "buy":
-        endpoint = "/public/units/sale"
-    else:
-        endpoint = "/public/units/rent"
+    endpoint = "/public/units/sale" if mode == "buy" else "/public/units/rent"
 
-    params = {}
+    params = {
+        "country": "",
+        "price": "",
+    }
 
-    # строка поиска (город / район)
-    text = filters.get("location")
-    if text:
-        params["text"] = text
+    # ---------- SEARCH TEXT ----------
+    # сайт ищет по тайскому названию района/проекта, а не русскому
+    location = filters.get("location")
+    if location:
+        params["text"] = location
 
-    # минимальная и максимальная цена
+    # ---------- PRICE ----------
     if filters.get("min_price") is not None:
         params["min_price"] = str(filters["min_price"])
+
     if filters.get("max_price") is not None:
         params["max_price"] = str(filters["max_price"])
 
-    # спальни
+    # ---------- BEDROOMS ----------
     if filters.get("bedrooms"):
         params["bed"] = str(filters["bedrooms"])
 
-    # ванны
+    # ---------- BATHROOMS ----------
     if filters.get("bathrooms"):
         params["bathroom"] = str(filters["bathrooms"])
 
-    # тип недвижимости (используем числовой код)
+    # ---------- PROPERTY TYPE ----------
     ptype = filters.get("property_type")
     if ptype:
         code = PROPERTY_TYPE_MAP.get(ptype)
         if code:
             params["type2[]"] = code
 
-    # дополнительные фильтры через текст (fallback)
+    # ---------- FEATURES ----------
+    # сайт НЕ ИМЕЕТ отдельных параметров для feature
     features = filters.get("features")
     if features:
-        params["text"] = params.get("text", "") + " " + " ".join(features)
-
-    # принудительно добавляем пустые, если почему-то нужны
-    params.setdefault("country", "")
+        add = " ".join(features)
+        params["text"] = params.get("text", "") + " " + add
 
     query = urlencode(params, doseq=True)
-    return f"{BASE}{endpoint}?{query}"
+    url = f"{BASE}{endpoint}?{query}"
+
+    logger.warning("FINAL BUILT URL: %s", url)
+    logger.warning("FILTERS: %s", filters)
+
+    return url
 
 
 def _parse_listing_block(block) -> Optional[Dict]:
