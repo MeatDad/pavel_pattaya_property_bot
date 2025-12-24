@@ -71,10 +71,14 @@ def _build_search_url(section: str, filters: dict) -> str:
 
     # property type
     ptype = filters.get("property_type")
+
     if ptype:
         code = PROPERTY_TYPE_MAP.get(ptype)
         if code:
-            params["type[]"] = code  # <--- правильное имя
+            params["type[]"] = code
+    else:
+        # fallback: without property type price filter DOES NOT WORK
+        params["type[]"] = "1"  # Condo
 
     # build final URL
     query = urlencode(params, doseq=True)
